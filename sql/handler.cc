@@ -5650,7 +5650,12 @@ inline bool handler::check_table_binlog_row_based(bool binlog_row)
 {
   if (unlikely((table->in_use->variables.sql_log_bin_off)))
     return 0;                            /* Called by partitioning engine */
-  if (unlikely((!check_table_binlog_row_based_done)))
+  /* Dont use cached result when current binlog format is stmt */
+  if (unlikely(((check_table_binlog_row_based_result &&
+               !table->in_use->is_current_stmt_binlog_format_row()) ||
+               (!check_table_binlog_row_based_result &&
+               table->in_use->is_current_stmt_binlog_format_row()) ||
+                         !check_table_binlog_row_based_done)))
   {
     check_table_binlog_row_based_done= 1;
     check_table_binlog_row_based_result=
@@ -5933,8 +5938,7 @@ int handler::ha_reset()
   table->default_column_bitmaps();
   pushed_cond= NULL;
   tracker= NULL;
-  mark_trx_read_write_done= check_table_binlog_row_based_done=
-    check_table_binlog_row_based_result= 0;
+  mark_trx_read_write_done=0;
   /* Reset information about pushed engine conditions */
   cancel_pushed_idx_cond();
   /* Reset information about pushed index conditions */
