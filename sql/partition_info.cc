@@ -1800,7 +1800,11 @@ part_column_list_val *partition_info::add_column_value(THD *thd)
       into the structure used for 1 column. After this we call
       ourselves recursively which should always succeed.
     */
-    if (!reorganize_into_single_field_col_val(thd))
+    num_columns= max_val;
+    int result= reorganize_into_single_field_col_val(thd);
+    num_columns= 0;
+
+    if (!result)
     {
       DBUG_RETURN(add_column_value(thd));
     }
